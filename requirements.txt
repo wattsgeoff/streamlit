@@ -1,1 +1,2 @@
+websocket-client==0.57.0
 websockets==12.0
