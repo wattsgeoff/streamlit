@@ -5,3 +5,4 @@ st.write("Hello world")
 st.write("Hello world Again")
 
 test = pd.DataFrame()
+st.write(test)
