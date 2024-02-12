@@ -1,1 +1,1 @@
-websocket
+websockets==12.0
