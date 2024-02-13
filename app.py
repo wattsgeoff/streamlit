@@ -13,18 +13,19 @@ st.write("# Welcome to My App! 👋")
 
 st.sidebar.success("Select a page above.")
 
-status_text = st.sidebar.empty()
+status_text = st.text('')
 
+pair = st.text_input('Pair', 'ETH/USD')
 kws = Kraken_WS()
-kws.spread_sub(['SOL/USDT'])
+kws.spread_sub([pair])
 kws.start()
-time.sleep(5)
+time.sleep(2)
 
 def get_mid(data):
     return (data['bid']*data['bid_size']+data['ask']*data['ask_size'])/(data['bid_size']+data['ask_size'])
 
 for i in range(0,10):
-    k_mid = get_mid(kws.spread_data['SOL/USDT'])
+    k_mid = get_mid(kws.spread_data[pair])
     status_text.text(k_mid)
     time.sleep(1)
 
