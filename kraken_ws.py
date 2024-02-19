@@ -43,14 +43,27 @@ class Kraken_WS(Client):
 
     def spread_sub(self, pairs):
         self.subscriptions['spread'] = {
-                        'params' : self.get_params(pairs),
+                        'params' : self.get_params(pairs, "spread"),
                         'msg_fun' : self.spread_msg
                     }
         self.spread_data = dict()
         for p in pairs:
             self.spread_data[p] = {'ts':None, 'bid':None, 'ask':None, 'bid_size':None, 'bid_size':None}
 
-    def get_params(self, pairs):
+    def trade_sub(self, pairs, rsi_period = 14, back_trades=50):
+        self.trades_back = back_trades
+        self.rsi_period = rsi_period
+        self.subscriptions['trade'] = {
+                        'params' : self.get_params(pairs, "trade"),
+                        'msg_fun' : self.trade_msg
+                    }
+        self.trade_data = dict()
+        self.buy_ewma = 0
+        self.sell_ewma = 0
+        for p in pairs:
+            self.trade_data[p] = pd.DataFrame(columns=['price','volume','side','orderType','misc'])
+
+    def get_params(self, pairs, sub_name):
 
         pairs_ = list()
         for p in pairs:
@@ -59,7 +72,7 @@ class Kraken_WS(Client):
                                 "event": "subscribe",
                                 "pair": pairs_,
                                 "subscription": {
-                                    "name": "spread"
+                                    "name": sub_name
                                 }
         }
         return params
@@ -76,5 +89,17 @@ class Kraken_WS(Client):
                 'ask_size': float(sp_data[4]),
             }
         except Exception as e: print(e)
+    
+    def trade_msg(self, data):
+        pair = pair_maps['kraken'][data[3]]
+        for t in data[1]:
+            ts = pd.to_datetime(float(t.pop(2))*1000000,unit='us', utc=True)
+            try:
+                # if t[2] == 'b': self.buy_ewma = (self.buy_ewma*(self.rsi_period-1)+float(t[1]))/self.rsi_period
+                # else : self.sell_ewma = (self.sell_ewma*(self.rsi_period-1)+float(t[1]))/self.rsi_period
+                # t.extend([self.buy_ewma, self.sell_ewma, 100-(100/(1+(self.buy_ewma/self.sell_ewma)))])
+                self.trade_data[pair].loc[ts] = t
+            except Exception as e: print(e)
+        self.trade_data[pair] = self.trade_data[pair].iloc[-self.trades_back:]
     
 
